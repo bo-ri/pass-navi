@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  mecab:
+    build:
+      context: .
+    container_name: 'pass-navi'
+    working_dir: '/root/pass-navi'
+    volumes:
+      - '.:/root/pass-navi'
+    tty: true
