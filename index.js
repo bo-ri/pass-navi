@@ -79,6 +79,24 @@ async function searchUnivDeviationValue (page, univ_data_link) {
   });
 }
 
+// 取得した偏差値の平均を計算して数値にキャストする
+function castDeviationAverage (deviation_values) {
+  for (let i = 0; i < deviation_values.length; i++) {
+    let deviation = deviation_values[i].deviation;
+    deviation = deviation.split('：')[1];
+    if (/〜/.test(deviation)) {
+      const lower = Number(deviation.split('〜')[0]);
+      const upper = Number(deviation.split('〜')[1]);
+      const average = (upper + lower) / 2;
+      deviation_values[i].deviation = average;
+    } else {
+      const average = Number(deviation);
+      deviation_values[i].deviation = average;
+    }
+  }
+  return deviation_values;
+}
+
 async function main () {
   const browser = await puppeteer.launch({
     args: ['--no-sandbox']
@@ -89,8 +107,8 @@ async function main () {
   //   const 
   // }
   const univ_data_link = await searchUniv(page, '青山学院大学');
-  const deviation_values = await searchUnivDeviationValue(page, univ_data_link);
-  console.log('deviation values: ', deviation_values);
+  let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
+  deviation_values = castDeviationAverage(deviation_values);
   browser.close();
 }
 
