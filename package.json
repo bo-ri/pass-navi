@@ -1,0 +1,23 @@
+{
+  "name": "pass-navi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bo-ri/pass-navi.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bo-ri/pass-navi/issues"
+  },
+  "homepage": "https://github.com/bo-ri/pass-navi#readme",
+  "dependencies": {
+    "puppeteer": "^2.0.0"
+  }
+}
