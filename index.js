@@ -107,6 +107,7 @@ async function getCampusLocations (page) {
       // evaluateの中はchromeで実行されるからevaluateの中で使うならここで定義しないといけない
       const getAddress = function (str) {
         const prefacture = /北海道|青森県|秋田県|宮城県|山形県|福島県|岩手県|東京都|埼玉県|神奈川県|千葉県|栃木県|群馬県|茨城県|新潟県|富山県|石川県|福井県|長野県|岐阜県|愛知県|静岡県|山梨県|滋賀県|京都府|大阪府|兵庫県|奈良県|三重県|和歌山県|鳥取県|島根県|広島県|岡山県|山口県|愛媛県|高知県|香川県|徳島県|福岡県|佐賀県|長崎県|大分県|熊本県|宮崎県|鹿児島県|沖縄県/;
+        const city_regex = /((?:旭川|伊達|石狩|盛岡|奥州|田村|南相馬|那須塩原|東村山|武蔵村山|羽村|十日町|上越|富山|野々市|大町|蒲郡|四日市|姫路|大和郡山|廿日市|下松|岩国|田川|大村)市|.+?郡(?:玉村|大町|.+?)[町村]|.+?市.+?区|.+?[市区町村])(.+)/u;
         const sentences = str.split('\n');
         let faculty = '';
         let address = '';
@@ -117,9 +118,16 @@ async function getCampusLocations (page) {
             address = sentences[i];
           }
         }
+        // 住所から都道府県，市区町村を抜き出す．
+        address = address.trim();
+        const result = address.match(prefacture);
+        const pref = result[0] // 都道府県
+        const base = address.split(result[0])[1]
+        const city = base.match(city_regex);  //市区町村
         return {
           faculty: faculty.trim(),
-          address: address.trim()
+          prefacture: pref,
+          city: city[1]
         };
       }
 
@@ -152,20 +160,33 @@ async function getCampusLocations (page) {
   })
 }
 
+// 常識の範囲内でsleepを挟む
+function sleep (delay) {
+  return new Promise(resolve => setTimeout(resolve, delay));
+} 
+
 async function main () {
   const browser = await puppeteer.launch({
     args: ['--no-sandbox']
   });
   const page = await browser.newPage();
-  // for (let i = 0; i < TARGET_UNIVS.length; i++) {
-  //   const univ_data_link = await searchUniv(page, TARGET_UNIVS[i]);
-  //   const 
-  // }
-  const univ_data_link = await searchUniv(page, '青山学院大学');
-  let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
-  deviation_values = castDeviationAverage(deviation_values);
-  const campus_locations = await getCampusLocations(page);
-  console.log('campus locations: ', campus_locations);
+  for (let i = 0; i < TARGET_UNIVS.length; i++) {
+    console.log(TARGET_UNIVS[i]);
+    const univ_data_link = await searchUniv(page, TARGET_UNIVS[i]);
+    let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
+    deviation_values = castDeviationAverage(deviation_values);
+    console.log('学部・偏差値\n', deviation_values);
+    const campus_locations = await getCampusLocations(page);
+    console.log('キャンパス所在地\n', campus_locations);
+
+    sleep(1000);
+  }
+  // const univ_data_link = await searchUniv(page, '青山学院大学');
+  // let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
+  // deviation_values = castDeviationAverage(deviation_values);
+  // console.log('deviation values: ', deviation_values);
+  // const campus_locations = await getCampusLocations(page);
+  // console.log('campus locations: ', campus_locations);
   browser.close();
 }
 
