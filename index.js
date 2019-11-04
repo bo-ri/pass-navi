@@ -111,9 +111,11 @@ async function getCampusLocations (page) {
         const sentences = str.split('\n');
         let faculty = '';
         let address = '';
+        let counter = 0;
         for (let i = 0; i < sentences.length; i++) {
-          if (/学部/.test(sentences[i])) {
+          if (/学部/.test(sentences[i]) && counter === 0) {
             faculty = sentences[i];
+            counter++;
           } else if (prefacture.test(sentences[i])) {
             address = sentences[i];
           }
@@ -130,6 +132,12 @@ async function getCampusLocations (page) {
           city: city[1]
         };
       }
+      /*
+      selectorの中の要素を見て以下3パターン考慮
+      - ttlsが存在する場合 実装済
+      - ttlsが存在しない，<p>が複数存在する場合 => <p>の中からキャンパス名と住所を抜き出し
+      - ttlsが存在しない，<p>が一つだけ存在する場合 => キャンパス名をメインにして住所抜き出し
+      */
 
       const list = Array.from(document.querySelectorAll(selector));
 
@@ -146,13 +154,25 @@ async function getCampusLocations (page) {
       const campus_names = campus_element.getElementsByClassName('ttlss');
       const campus_locations = campus_element.getElementsByTagName('p');
 
-      for (let i = 0; i < campus_names.length; i++) {
-        const element = {
-          campus: campus_names[i].textContent,
-          // location: campus_locations[i].textContent
-          location: getAddress(campus_locations[i].textContent)
-        };
-        data.push(element);
+      if (campus_names.length > 0) {     // <h5>でキャンパス名が取得できる場合
+        for (let i = 0; i < campus_names.length; i++) {
+          const element = {
+            campus: campus_names[i].textContent,
+            // location: campus_locations[i].textContent
+            location: getAddress(campus_locations[i].textContent)
+          };
+          data.push(element);
+        }
+      } else if (campus_locations.length > 1) {     // キャンパス名が<p>の中に隠れてる
+        for (let i = 0; i < campus_locations.length; i++) {
+          const address = getAddress(campus_locations[i].textContent);
+          const element = {
+            // campus: campus_locations[i].textContent,
+            campus: address.faculty,
+            location: address
+          }
+          data.push(element);
+        }
       }
       return data;
     }, TAGS.location_info);
@@ -170,23 +190,23 @@ async function main () {
     args: ['--no-sandbox']
   });
   const page = await browser.newPage();
-  for (let i = 0; i < TARGET_UNIVS.length; i++) {
-    console.log(TARGET_UNIVS[i]);
-    const univ_data_link = await searchUniv(page, TARGET_UNIVS[i]);
-    let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
-    deviation_values = castDeviationAverage(deviation_values);
-    console.log('学部・偏差値\n', deviation_values);
-    const campus_locations = await getCampusLocations(page);
-    console.log('キャンパス所在地\n', campus_locations);
+  // for (let i = 0; i < TARGET_UNIVS.length; i++) {
+  //   console.log(TARGET_UNIVS[i]);
+  //   const univ_data_link = await searchUniv(page, TARGET_UNIVS[i]);
+  //   let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
+  //   deviation_values = castDeviationAverage(deviation_values);
+  //   console.log('学部・偏差値\n', deviation_values);
+  //   const campus_locations = await getCampusLocations(page);
+  //   console.log('キャンパス所在地\n', campus_locations);
 
-    sleep(1000);
-  }
-  // const univ_data_link = await searchUniv(page, '青山学院大学');
-  // let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
-  // deviation_values = castDeviationAverage(deviation_values);
-  // console.log('deviation values: ', deviation_values);
-  // const campus_locations = await getCampusLocations(page);
-  // console.log('campus locations: ', campus_locations);
+  //   sleep(1000);
+  // }
+  const univ_data_link = await searchUniv(page, '日本大学');
+  let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
+  deviation_values = castDeviationAverage(deviation_values);
+  console.log('deviation values: ', deviation_values);
+  const campus_locations = await getCampusLocations(page);
+  console.log('campus locations: ', campus_locations);
   browser.close();
 }
 
