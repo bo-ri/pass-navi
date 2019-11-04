@@ -173,6 +173,14 @@ async function getCampusLocations (page) {
           }
           data.push(element);
         }
+      } else {                                      // キャンパスが一つだけ
+        let address = getAddress(campus_locations[0].textContent);
+        address.faculty = 'メイン';
+        const element = {
+          campus: 'メイン',
+          location: address
+        }
+        data.push(element);
       }
       return data;
     }, TAGS.location_info);
@@ -201,7 +209,7 @@ async function main () {
 
   //   sleep(1000);
   // }
-  const univ_data_link = await searchUniv(page, '日本大学');
+  const univ_data_link = await searchUniv(page, '武蔵大学');
   let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
   deviation_values = castDeviationAverage(deviation_values);
   console.log('deviation values: ', deviation_values);
