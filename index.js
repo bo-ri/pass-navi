@@ -19,7 +19,7 @@ const TARGET_UNIVS = [
   '明治学院大学',
   '学習院大学',
   '獨協大学',
-  '国学院大学',
+  '國學院大学',
   '武蔵大学',
   '東京理科大学',
   '国際基督教大学'
@@ -33,6 +33,7 @@ const TAGS = {
   search_text_area: 'input[name="university-name"]',
   search_button: '#search-button-top',
   // search result page
+  result: '#result-list-area > .result-box',
   target_univ_link: '.ttl-university > a',
   // individual university page
   deviation_value: 'ul > li > .clip-set > .text-area > a',
@@ -50,11 +51,29 @@ async function searchUniv (page, univ_name) {
     await page.waitForSelector('.ttl-university');
     // 大学詳細へのリンク踏むところ
     // アンカーのhref属性を取得する
-    const univ_page = await page.evaluate((selector) =>{
-      return document.querySelector(selector).getAttribute('href');
-    }, TAGS.target_univ_link);
-
-    const univ_data_link = `a[href="${univ_page}"]`;
+    // const univ_page = await page.evaluate((selector) =>{
+    //   return document.querySelector(selector).getAttribute('href');
+    // }, TAGS.target_univ_link);
+    const univ_page = await page.evaluate((selector) => {
+      const list = Array.from(document.querySelectorAll(selector));
+      let data = [];
+      for (let i = 0; i < list.length; i++) {
+        const element = {
+          name: list[i].querySelector('.ttl-university > a').textContent,
+          href: list[i].querySelector('.ttl-university > a').getAttribute('href')
+        }
+        data.push(element);
+      }
+      return data;
+    }, TAGS.result);
+    let href;
+    for (let i = 0; i < univ_page.length; i++) {
+      if (univ_page[i].name == univ_name) {
+        href = univ_page[i].href;
+        break;
+      }
+    }
+    const univ_data_link = `a[href="${href}"]`;
     resolve(univ_data_link);
   });
 }
@@ -198,23 +217,23 @@ async function main () {
     args: ['--no-sandbox']
   });
   const page = await browser.newPage();
-  // for (let i = 0; i < TARGET_UNIVS.length; i++) {
-  //   console.log(TARGET_UNIVS[i]);
-  //   const univ_data_link = await searchUniv(page, TARGET_UNIVS[i]);
-  //   let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
-  //   deviation_values = castDeviationAverage(deviation_values);
-  //   console.log('学部・偏差値\n', deviation_values);
-  //   const campus_locations = await getCampusLocations(page);
-  //   console.log('キャンパス所在地\n', campus_locations);
+  for (let i = 0; i < TARGET_UNIVS.length; i++) {
+    console.log(TARGET_UNIVS[i]);
+    const univ_data_link = await searchUniv(page, TARGET_UNIVS[i]);
+    let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
+    deviation_values = castDeviationAverage(deviation_values);
+    console.log('学部・偏差値\n', deviation_values);
+    const campus_locations = await getCampusLocations(page);
+    console.log('キャンパス所在地\n', campus_locations);
 
-  //   sleep(1000);
-  // }
-  const univ_data_link = await searchUniv(page, '武蔵大学');
-  let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
-  deviation_values = castDeviationAverage(deviation_values);
-  console.log('deviation values: ', deviation_values);
-  const campus_locations = await getCampusLocations(page);
-  console.log('campus locations: ', campus_locations);
+    sleep(1000);
+  }
+  // const univ_data_link = await searchUniv(page, '専修大学');
+  // let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
+  // deviation_values = castDeviationAverage(deviation_values);
+  // console.log('deviation values: ', deviation_values);
+  // const campus_locations = await getCampusLocations(page);
+  // console.log('campus locations: ', campus_locations);
   browser.close();
 }
 
