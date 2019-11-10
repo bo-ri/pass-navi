@@ -24,6 +24,8 @@ const TARGET_UNIVS = [
   '国際基督教大学'
 ];
 
+exports.TARGET_UNIVS = TARGET_UNIVS;
+
 const PASS_NAVI_URL = 'https://passnavi.evidus.com';
 
 // サイト上で操作するタグ
@@ -41,7 +43,7 @@ const TAGS = {
 };
 
 // 上のリストの大学を検索して遷移先のアンカータグ取得
-async function searchUniv (page, univ_name) {
+exports.searchUniv = async function (page, univ_name) {
   return new Promise(async function (resolve, reject) {
     await page.goto(PASS_NAVI_URL);
     // テキスト入力
@@ -150,12 +152,6 @@ async function getCampusLocations (page) {
           city: city[1]
         };
       }
-      /*
-      selectorの中の要素を見て以下3パターン考慮
-      - ttlsが存在する場合 実装済
-      - ttlsが存在しない，<p>が複数存在する場合 => <p>の中からキャンパス名と住所を抜き出し
-      - ttlsが存在しない，<p>が一つだけ存在する場合 => キャンパス名をメインにして住所抜き出し
-      */
 
       const list = Array.from(document.querySelectorAll(selector));
 
@@ -213,20 +209,23 @@ function sleep (delay) {
 
 
 exports.getUnivStatus = async function (univList = TARGET_UNIVS) {
-  const browser = await puppeteer.launch({
-    args: ['--no-sandbox']
-  });
-  const page = await browser.newPage();
-
-  for (let i = 0; i < univList.length; i++) {
-    const univ_data_link = await searchUniv(page, TARGET_UNIVS[i]);
-    let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
-    deviation_values = castDeviationAverage(deviation_values);
-    console.log('学部・偏差値\n', deviation_values);
-    const campus_locations = await getCampusLocations(page);
-    console.log('キャンパス所在地\n', campus_locations);
-
-    sleep(1000);
-  }
-  browser.close();
+  return new Promise(async(resolve, reject) => {
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox']
+    });
+    const page = await browser.newPage();
+  
+    for (let i = 0; i < univList.length; i++) {
+      const univ_data_link = await searchUniv(page, TARGET_UNIVS[i]);
+      let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
+      deviation_values = castDeviationAverage(deviation_values);
+      console.log('学部・偏差値\n', deviation_values);
+      const campus_locations = await getCampusLocations(page);
+      console.log('キャンパス所在地\n', campus_locations);
+  
+      sleep(1000);
+    }
+    browser.close();
+    resolve();
+  })
 }
