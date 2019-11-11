@@ -3,7 +3,7 @@ const getUnivStatus = require('./getUnivStatus');
 const TARGET_UNIVS = getUnivStatus.TARGET_UNIVS;
 
 const TAGS = {
-  location_info: '.section'
+  location_info: '.univcontent > .inner-univcontent > .section'
 };
 
 // 常識の範囲内でsleepを挟む
@@ -16,7 +16,7 @@ async function getAllData (page, link) {
     await page.click(link);
     await page.waitFor('.body-area');     // 対象のページに遷移してコンテンツがレンダリングされるのを待つ
     const univ_data = await page.evaluate((selector) => {
-      const regex = /学部一覧|キャンパス所在地|問合せ先/;
+      const regex = /学部一覧|キャンパス所在地|問合せ先|学生数・教員数/;
       const list = Array.from(document.querySelectorAll(selector));
       let data = [];
       for (let i = 0; i < list.length; i++) {
@@ -35,21 +35,22 @@ async function getAllData (page, link) {
   })
 }
 
-exports.getUnivData = async function () {
+exports.getUnivData = async function (univs = TARGET_UNIVS) {
   return new Promise(async(resolve, reject) => {
     const browser = await puppeteer.launch({
       args: ['--no-sandbox']
     });
     const page = await browser.newPage();
-
-    for(let i = 0; i < TARGET_UNIVS.length; i++) {
-      console.log(TARGET_UNIVS[i]);
+    const data = [];
+    for(let i = 0; i < univs.length; i++) {
+      console.log(univs[i]);
       const univ_data_link = await getUnivStatus.searchUniv(page, TARGET_UNIVS[i]);
       const univ_data = await getAllData(page, univ_data_link);
-      console.log(univ_data);
+      // console.log(univ_data);
+      data.push(univ_data);
       sleep(1000);
     }
     browser.close();
-    resolve();
+    resolve(data);
   })
 }

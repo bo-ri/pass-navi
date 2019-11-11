@@ -8,4 +8,5 @@ services:
     working_dir: '/root/pass-navi'
     volumes:
       - '.:/root/pass-navi'
+      - './../analyze:/root/analyze'
     tty: true
