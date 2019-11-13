@@ -16,7 +16,7 @@ async function getAllData (page, link) {
     await page.click(link);
     await page.waitFor('.body-area');     // 対象のページに遷移してコンテンツがレンダリングされるのを待つ
     const univ_data = await page.evaluate((selector) => {
-      const regex = /学部一覧|キャンパス所在地|問合せ先|学生数・教員数/;
+      const regex = /学部一覧|キャンパス所在地|問合せ先|学生数・教員数|特色/;
       const list = Array.from(document.querySelectorAll(selector));
       let data = [];
       for (let i = 0; i < list.length; i++) {
