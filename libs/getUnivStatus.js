@@ -216,7 +216,7 @@ exports.getUnivStatus = async function (univList = TARGET_UNIVS) {
     const page = await browser.newPage();
   
     for (let i = 0; i < univList.length; i++) {
-      const univ_data_link = await searchUniv(page, TARGET_UNIVS[i]);
+      const univ_data_link = await this.searchUniv(page, TARGET_UNIVS[i]);
       let deviation_values = await searchUnivDeviationValue(page, univ_data_link);
       deviation_values = castDeviationAverage(deviation_values);
       console.log('学部・偏差値\n', deviation_values);
